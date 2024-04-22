@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tank Problem</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(90deg, #ff7f50, #ff6347);
+            color: white;
+        }
+
+        .inputarea {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-bottom: 2px solid #ddd;
+        }
+
+        input[type=text] {
+            width: 80%;
+            padding: 10px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 1px solid #ff6347;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+
+        input[type=text]:focus {
+            border-color: #ff7f50;
+            outline: none;
+        }
+
+        .button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            color: white;
+            background-color: #ff6347;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .button:hover {
+            background-color: #ff4500;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .waterAndWallContainer,
+        .onlyWaterContainer {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            border-bottom: 2px solid #ddd;
+        }
+
+        #chart-container,
+        #chart-container1 {
+            width: 90%;
+            height: 300px;
+        }
+
+        .section {
+            margin-top: 20px;
+        }
+
+        #waterunit {
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+    <script src="https://fastly.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Tank Problem</h1>
+    </div>
+    
+    <div class="inputarea">
+        <input type="text" id="inputArr" placeholder="Enter values separated by commas (e.g., 0, 4, 0, 0, 6, 0, 6, 4, 0)">
+        <button class="button" onclick="fetchArr()">Compute</button>
+    </div>
+
+    <div class="waterAndWallContainer section">
+        <h2>Water and Wall Chart</h2>
+        <div id="chart-container"></div>
+    </div>
+
+    <div class="onlyWaterContainer section">
+        <h2>Only Water Chart</h2>
+        <h4>Total Water Units: <span id="waterunit"></span></h4>
+        <div id="chart-container1"></div>
+    </div>
+
+    <script>
+        function fetchArr() {
+            const inputElement = document.getElementById('inputArr');
+            const inputArr = inputElement.value.split(',').map(Number);
+
+            waterAndBricks(inputArr);
+            onlyWater(inputArr);
+        }
+
+        function createChart(xaxis, data, elementId) {
+            var chartContainer = document.getElementById(elementId);
+            var chart = echarts.init(chartContainer);
+
+            var option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}: {c}'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: xaxis,
+                    axisLabel: {
+                        color: '#666'
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: '#ff6347'
+                        }
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: {
+                        color: '#666'
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: '#ff6347'
+                        }
+                    }
+                },
+                series: [
+                    {
+                        type: 'bar',
+                        data: data,
+                        itemStyle: {
+                            borderRadius: [10, 10, 0, 0],
+                            color: {
+                                type: 'linear',
+                                x: 0,
+                                y: 0,
+                                x2: 0,
+                                y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: '#ff7f50' },
+                                    { offset: 1, color: '#ff6347' }
+                                ]
+                            }
+                        },
+                        animationDuration: 1500
+                    }
+                ]
+            };
+
+            chart.setOption(option);
+
+            window.addEventListener('resize', () => {
+                chart.resize();
+            });
+        }
+
+        function waterAndBricks(bricks) {
+            let firstCase = [];
+            let secondCase = [];
+            let finalCase = [];
+            let result = [];
+            let lastValueForFirstCase = 0;
+            let lastValueForSecondCase = 0;
+
+            for (let i = 0; i < bricks.length; i++) {
+                let element = bricks[i];
+                if (element === 0) {
+                    firstCase.push(lastValueForFirstCase);
+                } else {
+                    firstCase.push('-');
+                    lastValueForFirstCase = element;
+                }
+            }
+
+            for (let i = bricks.length - 1; i >= 0; i--) {
+                let element = bricks[i];
+                if (element === 0) {
+                    secondCase[i] = lastValueForSecondCase;
+                } else {
+                    secondCase[i] = '-';
+                    lastValueForSecondCase = element;
+                }
+            }
+
+            for (let i = 0; i < bricks.length; i++) {
+                let fc = firstCase[i];
+                let sc = secondCase[i];
+                if (fc === '-') {
+                    finalCase[i] = '-';
+                } else {
+                    finalCase[i] = fc - sc > 0 ? sc : fc;
+                }
+            }
+
+            for (let i = 0; i < bricks.length; i++) {
+                let element = bricks[i];
+                if (element === 0) {
+                    result.push({
+                        value: finalCase[i],
+                        itemStyle: {
+                            color: '#ff6347'
+                        }
+                    });
+                } else {
+                    result.push({
+                        value: element,
+                        itemStyle: {
+                            color: '#ff7f50'
+                        }
+                    });
+                }
+            }
+
+            createChart(bricks, result, 'chart-container');
+            const outputSpan = document.getElementById('waterunit');
+            outputSpan.innerHTML = `Total ${countWaterUnits(finalCase)} Water Units`;
+        }
+
+        function onlyWater(water) {
+            let firstCase = [];
+            let secondCase = [];
+            let finalCase = [];
+            let result = [];
+
+            let lastValueForFirstCase = 0;
+            let lastValueForSecondCase = 0;
+
+            for (let i = 0; i < water.length; i++) {
+                let element = water[i];
+                if (element === 0) {
+                    firstCase.push(lastValueForFirstCase);
+                } else {
+                    firstCase.push('-');
+                    lastValueForFirstCase = element;
+                }
+            }
+
+            for (let i = water.length - 1; i >= 0; i--) {
+                let element = water[i];
+                if (element === 0) {
+                    secondCase[i] = lastValueForSecondCase;
+                } else {
+                    secondCase[i] = '-';
+                    lastValueForSecondCase = element;
+                }
+            }
+
+            for (let i = 0; i < water.length; i++) {
+                let fc = firstCase[i];
+                let sc = secondCase[i];
+                if (fc === '-') {
+                    finalCase[i] = '-';
+                } else {
+                    finalCase[i] = fc - sc > 0 ? sc : fc;
+                }
+            }
+
+            for (let i = 0; i < water.length; i++) {
+                let element = water[i];
+                if (element === 0) {
+                    result.push({
+                        value: finalCase[i],
+                        itemStyle: {
+                            color: '#00aaff'
+                        }
+                    });
+                } else {
+                    result.push({
+                        value: element - finalCase[i], 
+                        itemStyle: {
+                            color: '#00aaff'
+                        }
+                    });
+                }
+            }
+
+            createChart(water, result, 'chart-container1');
+        }
+
+        function countWaterUnits(finalCase) {
+            let sum = 0;
+            for (let i = 0; i < finalCase.length; i++) {
+                if (finalCase[i] !== '-') {
+                    sum += Number(finalCase[i]);
+                }
+            }
+            return sum;
+        }
+    </script>
+</body>
+</html>
